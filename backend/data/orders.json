@@ -1,0 +1,23 @@
+[
+  {
+    "productId": "tpl_001",
+    "email": "nexsysai.info@gmail.com",
+    "amount": 299,
+    "razorpayOrderId": "order_TbBHZmhkEgmLdC",
+    "razorpayPaymentId": null,
+    "status": "created",
+    "createdAt": "2026-09-12T15:50:31.530Z"
+  },
+  {
+    "productId": "tpl_001",
+    "email": "nexsysai.info@gmail.com",
+    "amount": 299,
+    "razorpayOrderId": "order_TbBJJNISQ1rRRT",
+    "razorpayPaymentId": "pay_TbBKSyal7APGzS",
+    "status": "payment_verified",
+    "createdAt": "2026-09-12T15:52:10.084Z",
+    "downloadToken": "7e4dcf0d69aeaa6e9ec0c82992136533a6d4b46e1269025bac3a6de9621e94fa",
+    "downloadCount": 1,
+    "maxDownloads": 3
+  }
+]

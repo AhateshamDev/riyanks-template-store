@@ -1,0 +1,24 @@
+[
+  {
+    "id": "tpl_001",
+    "title": "Baran",
+    "slug": "Baran",
+    "description": "Professional Baran template for Instagram.",
+    "price": 299,
+    "currency": "INR",
+    "category": "Baran",
+    "software": "Adobe After Effects",
+    "version": "2025+",
+    "duration": "51 seconds",
+    "previewVideo": "/uploads/previews/Baran.mp4",
+    "thumbnail": "",
+    "templateFile": "Baran.zip",
+    "features": [
+      "Fully editable",
+      "1080p resolution",
+      "Easy customization",
+      "Professional transitions",
+      "Project files included"
+    ]
+  }
+]
