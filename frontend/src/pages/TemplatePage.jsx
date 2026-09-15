@@ -210,35 +210,9 @@ export default function TemplatePage() {
                   maxHeight: "700px",
                 }}
               >
-                {/* {template.previewVideo ?
-                  <video
-                    src={`${API_URL}${template.previewVideo}`}
-                    controls
-                    controlsList="nodownload"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                : <Box
-                    sx={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography color="white">
-                      Preview video coming soon
-                    </Typography>
-                  </Box>
-                } */}
-
                 {template.previewVideo ?
                   <video
-                    src={`http://localhost:5000${template.previewVideo}`}
+                    src={`${API_URL}${template.previewVideo}`}
                     controls
                     playsInline
                     preload="metadata"
