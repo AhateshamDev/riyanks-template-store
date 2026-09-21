@@ -703,7 +703,11 @@ export default function Home() {
                     {template.thumbnail ?
                       <Box
                         component="img"
-                        src={`${BACKEND_URL}${template.thumbnail}`}
+                        src={
+                          template.thumbnail?.startsWith("http") ?
+                            template.thumbnail
+                          : `${BACKEND_URL}${template.thumbnail}`
+                        }
                         alt={template.title}
                         loading="lazy"
                         sx={{
