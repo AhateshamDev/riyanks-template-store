@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 5000;
 // ==========================================
 
 const PRODUCTS_FILE = path.join(__dirname, "data", "products.json");
-
 const ORDERS_FILE = path.join(__dirname, "data", "orders.json");
 
 // ==========================================
@@ -37,10 +36,20 @@ app.use(cors());
 
 app.use(express.json());
 
-// Preview videos/images
+// ==========================================
+// PUBLIC PREVIEW FILES
+// ==========================================
+
+// Bairan / other local preview files
 app.use(
   "/uploads/previews",
   express.static(path.join(__dirname, "uploads/previews")),
+);
+
+// Product thumbnails
+app.use(
+  "/uploads/thumbnails",
+  express.static(path.join(__dirname, "uploads/thumbnails")),
 );
 
 // ==========================================
@@ -57,7 +66,7 @@ function readJSON(file) {
 }
 
 function writeJSON(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
 }
 
 function getProducts() {
@@ -166,8 +175,8 @@ app.post("/api/payment/create-order", async (req, res) => {
     }
 
     // Product price is in INR.
-    // Razorpay requires the amount in paise.
-    // Example: ₹299 = 29900 paise.
+    // Razorpay requires paise.
+    // ₹99 = 9900 paise.
     const amount = Math.round(Number(product.price) * 100);
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -187,22 +196,16 @@ app.post("/api/payment/create-order", async (req, res) => {
       },
     });
 
-    // Save order locally
+    // Save order
     const orders = getOrders();
 
     orders.push({
       productId: product.id,
-
       email,
-
       amount: product.price,
-
       razorpayOrderId: razorpayOrder.id,
-
       razorpayPaymentId: null,
-
       status: "created",
-
       createdAt: new Date().toISOString(),
     });
 
@@ -213,9 +216,7 @@ app.post("/api/payment/create-order", async (req, res) => {
 
       order: {
         id: razorpayOrder.id,
-
         amount: razorpayOrder.amount,
-
         currency: razorpayOrder.currency,
       },
 
@@ -261,17 +262,13 @@ app.post("/api/payment/verify", async (req, res) => {
     }
 
     // ==========================================
-    // GENERATE RAZORPAY SIGNATURE
+    // VERIFY RAZORPAY SIGNATURE
     // ==========================================
 
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
-
-    // ==========================================
-    // COMPARE SIGNATURES
-    // ==========================================
 
     if (generatedSignature !== razorpay_signature) {
       return res.status(400).json({
@@ -288,7 +285,6 @@ app.post("/api/payment/verify", async (req, res) => {
 
     order.status = "payment_verified";
 
-    // Secure random download token
     order.downloadToken = crypto.randomBytes(32).toString("hex");
 
     order.downloadCount = 0;
@@ -299,11 +295,8 @@ app.post("/api/payment/verify", async (req, res) => {
 
     res.json({
       success: true,
-
       productId: order.productId,
-
       downloadToken: order.downloadToken,
-
       message: "Payment verified",
     });
   } catch (error) {
@@ -325,11 +318,10 @@ app.get("/api/download/:productId/:token", (req, res) => {
     const { productId, token } = req.params;
 
     const orders = getOrders();
-
     const products = getProducts();
 
     // ==========================================
-    // FIND VERIFIED ORDER
+    // FIND VERIFIED PAYMENT
     // ==========================================
 
     const order = orders.find(
@@ -381,12 +373,9 @@ app.get("/api/download/:productId/:token", (req, res) => {
     }
 
     // ==========================================
-    // DOWNLOAD FILE MAPPING
+    // PRIVATE DOWNLOAD URL MAPPING
     // ==========================================
 
-    // IMPORTANT:
-    // These URLs stay in the backend and are NOT
-    // returned by /api/templates.
     const downloadUrls = {
       tpl_001:
         "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.0/Bairan.PF-20260915T145035Z-1-001.zip",
@@ -405,19 +394,15 @@ app.get("/api/download/:productId/:token", (req, res) => {
     }
 
     // ==========================================
-    // REQUEST GITHUB FILE
+    // DOWNLOAD / REDIRECT
     // ==========================================
 
     const requestFile = (url) => {
-      const fileRequest = https.get(url, (fileResponse) => {
-        // ==========================================
-        // FOLLOW REDIRECTS
-        // ==========================================
-
+      const request = https.get(url, (fileResponse) => {
+        // GitHub normally redirects release assets
         if (fileResponse.statusCode >= 300 && fileResponse.statusCode < 400) {
           const redirectUrl = fileResponse.headers.location;
 
-          // Close the current response stream
           fileResponse.resume();
 
           if (!redirectUrl) {
@@ -431,7 +416,7 @@ app.get("/api/download/:productId/:token", (req, res) => {
         }
 
         // ==========================================
-        // CHECK FILE RESPONSE
+        // CHECK RESPONSE
         // ==========================================
 
         if (fileResponse.statusCode !== 200) {
@@ -463,13 +448,13 @@ app.get("/api/download/:productId/:token", (req, res) => {
         res.setHeader("Content-Type", "application/zip");
 
         // ==========================================
-        // STREAM FILE TO CUSTOMER
+        // STREAM FILE
         // ==========================================
 
         fileResponse.pipe(res);
       });
 
-      fileRequest.on("error", (error) => {
+      request.on("error", (error) => {
         console.error("Download request error:", error);
 
         if (!res.headersSent) {
