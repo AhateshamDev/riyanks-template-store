@@ -420,7 +420,11 @@ export default function TemplatePage() {
               >
                 {template.previewVideo ?
                   <video
-                    src={`${API_URL}${template.previewVideo}`}
+                    src={
+                      template.previewVideo?.startsWith("http") ?
+                        template.previewVideo
+                      : `${API_URL}${template.previewVideo}`
+                    }
                     controls
                     playsInline
                     preload="metadata"

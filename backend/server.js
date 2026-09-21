@@ -390,6 +390,9 @@ app.get("/api/download/:productId/:token", (req, res) => {
     const downloadUrls = {
       tpl_001:
         "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.0/Bairan.PF-20260915T145035Z-1-001.zip",
+
+      tpl_002:
+        "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.1/Paroo.zip",
     };
 
     const fileUrl = downloadUrls[productId];

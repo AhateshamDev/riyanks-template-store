@@ -20,5 +20,28 @@
       "Professional transitions",
       "Project files included"
     ]
+  },
+  {
+    "id": "tpl_002",
+    "title": "Paaro",
+    "slug": "Paaro",
+    "description": "Professional Paaro video editing template for Instagram reels and cinematic short-form content.",
+    "price": 299,
+    "currency": "INR",
+    "category": "Paaro",
+    "software": "Adobe After Effects",
+    "version": "2025+",
+    "duration": "45 seconds",
+    "previewVideo": "/uploads/previews/Paaro.mp4",
+    "thumbnail": "",
+    "templateFile": "Paaro.zip",
+    "features": [
+      "Fully editable",
+      "1080p resolution",
+      "Easy customization",
+      "Smooth transitions",
+      "Professional effects",
+      "Project files included"
+    ]
   }
 ]
