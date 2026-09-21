@@ -11,7 +11,7 @@
     "version": "2026+",
     "duration": "47 seconds",
     "previewVideo": "/uploads/previews/Bairan.mp4",
-    "thumbnail": "",
+    "thumbnail": "/uploads/thumbnails/Bairan.jpeg",
     "templateFile": "Bairan.zip",
     "features": [
       "Fully editable",
@@ -33,7 +33,7 @@
     "version": "2026+",
     "duration": "37 seconds",
     "previewVideo": "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.1/Paaro.mp4",
-    "thumbnail": "",
+    "thumbnail": "/uploads/thumbnails/Paaro.jpeg",
     "templateFile": "Paaro.zip",
     "features": [
       "Fully editable",
