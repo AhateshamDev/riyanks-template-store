@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const https = require("https");
 
 const app = express();
 
@@ -305,19 +306,28 @@ app.get("/api/download/:productId/:token", (req, res) => {
   try {
     const { productId, token } = req.params;
 
-    const orders = getOrders();
+    const orders = readOrders();
 
     const order = orders.find(
-      (item) =>
-        item.productId === productId &&
-        item.downloadToken === token &&
-        item.status === "payment_verified",
+      (o) =>
+        o.productId === productId &&
+        o.downloadToken === token &&
+        o.paymentStatus === "payment_verified",
     );
 
     if (!order) {
       return res.status(403).json({
         success: false,
-        message: "Invalid download link",
+        message: "Invalid or unauthorized download link",
+      });
+    }
+
+    const product = products.find((p) => p.id === productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
       });
     }
 
@@ -328,42 +338,92 @@ app.get("/api/download/:productId/:token", (req, res) => {
       });
     }
 
-    const products = getProducts();
+    // Private backend-only mapping for downloadable files
+    const downloadUrls = {
+      tpl_001:
+        "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.0/Bairan.PF-20260915T145035Z-1-001.zip",
+    };
 
-    const product = products.find((item) => item.id === productId);
+    const fileUrl = downloadUrls[productId];
 
-    if (!product) {
+    if (!fileUrl) {
       return res.status(404).json({
         success: false,
-        message: "Template not found",
-      });
-    }
-
-    const filePath = path.join(
-      __dirname,
-      "uploads",
-      "templates",
-      product.templateFile,
-    );
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "Template file not found",
+        message: "Template file not configured",
       });
     }
 
     order.downloadCount += 1;
+    writeOrders(orders);
 
-    writeJSON(ORDERS_FILE, orders);
+    https
+      .get(fileUrl, (githubResponse) => {
+        if (
+          githubResponse.statusCode >= 300 &&
+          githubResponse.statusCode < 400
+        ) {
+          const redirectUrl = githubResponse.headers.location;
 
-    res.download(filePath, product.templateFile);
+          if (!redirectUrl) {
+            return res.status(502).json({
+              success: false,
+              message: "Unable to access template file",
+            });
+          }
+
+          https.get(redirectUrl, (finalResponse) => {
+            if (finalResponse.statusCode !== 200) {
+              return res.status(502).json({
+                success: false,
+                message: "Unable to download template file",
+              });
+            }
+
+            res.setHeader(
+              "Content-Disposition",
+              `attachment; filename="${product.title}.zip"`,
+            );
+            res.setHeader("Content-Type", "application/zip");
+
+            finalResponse.pipe(res);
+          });
+
+          return;
+        }
+
+        if (githubResponse.statusCode !== 200) {
+          return res.status(502).json({
+            success: false,
+            message: "Unable to download template file",
+          });
+        }
+
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${product.title}.zip"`,
+        );
+        res.setHeader("Content-Type", "application/zip");
+
+        githubResponse.pipe(res);
+      })
+      .on("error", (error) => {
+        console.error("Download error:", error);
+
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            message: "Template download failed",
+          });
+        } else {
+          res.end();
+        }
+      });
   } catch (error) {
-    console.error(error);
+    console.error("Download route error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Unable to download template",
+      message: "Download failed",
     });
   }
 });
