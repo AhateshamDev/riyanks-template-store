@@ -51,6 +51,7 @@ function readJSON(file) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
   } catch (error) {
+    console.error(`Error reading JSON file: ${file}`, error);
     return [];
   }
 }
@@ -91,7 +92,7 @@ app.get("/api/templates", (req, res) => {
       products,
     });
   } catch (error) {
-    console.error(error);
+    console.error("GET TEMPLATES ERROR:", error);
 
     res.status(500).json({
       success: false,
@@ -122,7 +123,7 @@ app.get("/api/templates/:slug", (req, res) => {
       product,
     });
   } catch (error) {
-    console.error(error);
+    console.error("GET TEMPLATE ERROR:", error);
 
     res.status(500).json({
       success: false,
@@ -164,8 +165,17 @@ app.post("/api/payment/create-order", async (req, res) => {
       });
     }
 
-    // ₹299 = 29900 paise
+    // Product price is in INR.
+    // Razorpay requires the amount in paise.
+    // Example: ₹299 = 29900 paise.
     const amount = Math.round(Number(product.price) * 100);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product price",
+      });
+    }
 
     const razorpayOrder = await razorpay.orders.create({
       amount,
@@ -250,13 +260,19 @@ app.post("/api/payment/verify", async (req, res) => {
       });
     }
 
-    // Generate signature
+    // ==========================================
+    // GENERATE RAZORPAY SIGNATURE
+    // ==========================================
+
     const generatedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    // Compare signatures
+    // ==========================================
+    // COMPARE SIGNATURES
+    // ==========================================
+
     if (generatedSignature !== razorpay_signature) {
       return res.status(400).json({
         success: false,
@@ -264,13 +280,15 @@ app.post("/api/payment/verify", async (req, res) => {
       });
     }
 
-    // Update order
+    // ==========================================
+    // UPDATE ORDER
+    // ==========================================
+
     order.razorpayPaymentId = razorpay_payment_id;
 
     order.status = "payment_verified";
 
-    // Temporary download token.
-    // We'll improve this later.
+    // Secure random download token
     order.downloadToken = crypto.randomBytes(32).toString("hex");
 
     order.downloadCount = 0;
@@ -306,13 +324,19 @@ app.get("/api/download/:productId/:token", (req, res) => {
   try {
     const { productId, token } = req.params;
 
-    const orders = readOrders();
+    const orders = getOrders();
+
+    const products = getProducts();
+
+    // ==========================================
+    // FIND VERIFIED ORDER
+    // ==========================================
 
     const order = orders.find(
-      (o) =>
-        o.productId === productId &&
-        o.downloadToken === token &&
-        o.paymentStatus === "payment_verified",
+      (item) =>
+        item.productId === productId &&
+        item.downloadToken === token &&
+        item.status === "payment_verified",
     );
 
     if (!order) {
@@ -322,12 +346,30 @@ app.get("/api/download/:productId/:token", (req, res) => {
       });
     }
 
-    const product = products.find((p) => p.id === productId);
+    // ==========================================
+    // FIND PRODUCT
+    // ==========================================
+
+    const product = products.find((item) => item.id === productId);
 
     if (!product) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
+      });
+    }
+
+    // ==========================================
+    // DOWNLOAD LIMIT
+    // ==========================================
+
+    if (
+      typeof order.downloadCount !== "number" ||
+      typeof order.maxDownloads !== "number"
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Download settings are invalid",
       });
     }
 
@@ -338,7 +380,13 @@ app.get("/api/download/:productId/:token", (req, res) => {
       });
     }
 
-    // Private backend-only mapping for downloadable files
+    // ==========================================
+    // DOWNLOAD FILE MAPPING
+    // ==========================================
+
+    // IMPORTANT:
+    // These URLs stay in the backend and are NOT
+    // returned by /api/templates.
     const downloadUrls = {
       tpl_001:
         "https://github.com/AhateshamDev/riyanks-template-store/releases/download/v1.0.0/Bairan.PF-20260915T145035Z-1-001.zip",
@@ -353,16 +401,21 @@ app.get("/api/download/:productId/:token", (req, res) => {
       });
     }
 
-    order.downloadCount += 1;
-    writeOrders(orders);
+    // ==========================================
+    // REQUEST GITHUB FILE
+    // ==========================================
 
-    https
-      .get(fileUrl, (githubResponse) => {
-        if (
-          githubResponse.statusCode >= 300 &&
-          githubResponse.statusCode < 400
-        ) {
-          const redirectUrl = githubResponse.headers.location;
+    const requestFile = (url) => {
+      const fileRequest = https.get(url, (fileResponse) => {
+        // ==========================================
+        // FOLLOW REDIRECTS
+        // ==========================================
+
+        if (fileResponse.statusCode >= 300 && fileResponse.statusCode < 400) {
+          const redirectUrl = fileResponse.headers.location;
+
+          // Close the current response stream
+          fileResponse.resume();
 
           if (!redirectUrl) {
             return res.status(502).json({
@@ -371,43 +424,50 @@ app.get("/api/download/:productId/:token", (req, res) => {
             });
           }
 
-          https.get(redirectUrl, (finalResponse) => {
-            if (finalResponse.statusCode !== 200) {
-              return res.status(502).json({
-                success: false,
-                message: "Unable to download template file",
-              });
-            }
-
-            res.setHeader(
-              "Content-Disposition",
-              `attachment; filename="${product.title}.zip"`,
-            );
-            res.setHeader("Content-Type", "application/zip");
-
-            finalResponse.pipe(res);
-          });
-
-          return;
+          return requestFile(redirectUrl);
         }
 
-        if (githubResponse.statusCode !== 200) {
+        // ==========================================
+        // CHECK FILE RESPONSE
+        // ==========================================
+
+        if (fileResponse.statusCode !== 200) {
+          fileResponse.resume();
+
           return res.status(502).json({
             success: false,
             message: "Unable to download template file",
           });
         }
 
+        // ==========================================
+        // COUNT DOWNLOAD
+        // ==========================================
+
+        order.downloadCount += 1;
+
+        writeJSON(ORDERS_FILE, orders);
+
+        // ==========================================
+        // DOWNLOAD HEADERS
+        // ==========================================
+
         res.setHeader(
           "Content-Disposition",
           `attachment; filename="${product.title}.zip"`,
         );
+
         res.setHeader("Content-Type", "application/zip");
 
-        githubResponse.pipe(res);
-      })
-      .on("error", (error) => {
-        console.error("Download error:", error);
+        // ==========================================
+        // STREAM FILE TO CUSTOMER
+        // ==========================================
+
+        fileResponse.pipe(res);
+      });
+
+      fileRequest.on("error", (error) => {
+        console.error("Download request error:", error);
 
         if (!res.headersSent) {
           res.status(500).json({
@@ -418,6 +478,9 @@ app.get("/api/download/:productId/:token", (req, res) => {
           res.end();
         }
       });
+    };
+
+    requestFile(fileUrl);
   } catch (error) {
     console.error("Download route error:", error);
 
