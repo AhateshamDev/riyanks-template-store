@@ -940,25 +940,7 @@ export default function Home() {
           bottom: 12,
           zIndex: 100,
         }}
-      >
-        <Button
-          href="#templates"
-          fullWidth
-          variant="contained"
-          endIcon={<ArrowForwardRoundedIcon />}
-          sx={{
-            minHeight: 54,
-            borderRadius: 3,
-            textTransform: "none",
-            fontSize: "0.95rem",
-            fontWeight: 800,
-            boxShadow: "0 12px 35px rgba(0,0,0,0.2)",
-            backdropFilter: "blur(10px)",
-          }}
-        >
-          Explore Templates
-        </Button>
-      </Box>
+      ></Box>
 
       {/* Mobile bottom safe space */}
 
