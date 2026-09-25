@@ -219,8 +219,8 @@ export default function Home() {
               md: 5,
             },
             pt: {
-              xs: 5,
-              sm: 7,
+              xs: 10,
+              sm: 8,
               md: 10,
             },
             pb: {
@@ -281,7 +281,7 @@ export default function Home() {
               sx={{
                 mt: 3,
                 fontSize: {
-                  xs: "2.65rem",
+                  xs: "2.15rem",
                   sm: "3.8rem",
                   md: "5.2rem",
                 },
@@ -290,7 +290,7 @@ export default function Home() {
                   sm: 1,
                 },
                 fontWeight: 900,
-                letterSpacing: "-0.055em",
+                letterSpacing: "-0.035em",
                 color: "#fff",
                 maxWidth: 900,
                 mx: "auto",
@@ -382,6 +382,14 @@ export default function Home() {
                   width: {
                     xs: "100%",
                     sm: "auto",
+                  },
+                  maxWidth: {
+                    xs: 340,
+                    sm: "none",
+                  },
+                  mx: {
+                    xs: "auto",
+                    sm: 0,
                   },
                   minHeight: 54,
                   px: 3,
@@ -625,6 +633,18 @@ export default function Home() {
             >
               <CardContent
                 sx={{
+                  width: {
+                    xs: "100%",
+                    sm: "100%",
+                  },
+                  maxWidth: {
+                    xs: 430,
+                    sm: "none",
+                  },
+                  mx: {
+                    xs: "auto",
+                    sm: 0,
+                  },
                   py: 8,
                   textAlign: "center",
                 }}

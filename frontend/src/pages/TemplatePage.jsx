@@ -288,6 +288,11 @@ export default function TemplatePage() {
           width: "100%",
           backgroundColor: "#ffffff",
           borderBottom: "1px solid #ececef",
+          pt: {
+            xs: 9,
+            sm: 9,
+            md: 1.5,
+          },
         }}
       >
         <Box
@@ -306,21 +311,7 @@ export default function TemplatePage() {
             justifyContent: "space-between",
           }}
         >
-          <Button
-            href="/"
-            startIcon={<ArrowBackRoundedIcon />}
-            sx={{
-              color: "#17191e",
-              textTransform: "none",
-              fontWeight: 700,
-              minWidth: 0,
-              px: 1,
-            }}
-          >
-            Templates
-          </Button>
-
-          <Stack direction="row" spacing={0.6} alignItems="center">
+          {/* <Stack direction="row" spacing={0.6} alignItems="center">
             <SecurityRoundedIcon
               sx={{
                 fontSize: 16,
@@ -336,7 +327,7 @@ export default function TemplatePage() {
             >
               Secure checkout
             </Typography>
-          </Stack>
+          </Stack> */}
         </Box>
       </Box>
 
@@ -353,7 +344,7 @@ export default function TemplatePage() {
             md: 5,
           },
           py: {
-            xs: 2,
+            xs: 1.5,
             sm: 3,
             md: 5,
           },
@@ -373,7 +364,8 @@ export default function TemplatePage() {
             },
             alignItems: "flex-start",
             gap: {
-              xs: 2.5,
+              xs: 2,
+              sm: 3,
               md: 4,
             },
           }}
@@ -396,7 +388,7 @@ export default function TemplatePage() {
               sx={{
                 width: "100%",
                 borderRadius: {
-                  xs: 2.5,
+                  xs: 2,
                   sm: 3.5,
                 },
                 overflow: "hidden",
@@ -466,7 +458,10 @@ export default function TemplatePage() {
               flexWrap="wrap"
               useFlexGap
               sx={{
-                mt: 1.5,
+                mt: {
+                  xs: 1,
+                  sm: 1.5,
+                },
                 px: 0.25,
               }}
             >
@@ -526,7 +521,7 @@ export default function TemplatePage() {
               sx={{
                 width: "100%",
                 borderRadius: {
-                  xs: 2.5,
+                  xs: 2,
                   sm: 3.5,
                 },
                 border: "1px solid #e7e8ec",
@@ -536,7 +531,7 @@ export default function TemplatePage() {
               <CardContent
                 sx={{
                   p: {
-                    xs: 2.5,
+                    xs: 2,
                     sm: 3.5,
                   },
                 }}
@@ -562,7 +557,7 @@ export default function TemplatePage() {
                     component="h1"
                     sx={{
                       fontSize: {
-                        xs: "2rem",
+                        xs: "1.75rem",
                         sm: "2.35rem",
                         md: "2.75rem",
                       },
@@ -593,7 +588,7 @@ export default function TemplatePage() {
                     <Typography
                       sx={{
                         fontSize: {
-                          xs: "2rem",
+                          xs: "1.85rem",
                           sm: "2.25rem",
                         },
                         lineHeight: 1,
@@ -641,7 +636,10 @@ export default function TemplatePage() {
                       {template.software && (
                         <Box
                           sx={{
-                            flex: "1 1 145px",
+                            flex: {
+                              xs: "1 1 100%",
+                              sm: "1 1 145px",
+                            },
                             p: 1.4,
                             borderRadius: 2,
                             backgroundColor: "#f5f6f8",
@@ -672,7 +670,10 @@ export default function TemplatePage() {
                       {template.version && (
                         <Box
                           sx={{
-                            flex: "1 1 145px",
+                            flex: {
+                              xs: "1 1 100%",
+                              sm: "1 1 145px",
+                            },
                             p: 1.4,
                             borderRadius: 2,
                             backgroundColor: "#f5f6f8",
@@ -703,7 +704,10 @@ export default function TemplatePage() {
                       {template.duration && (
                         <Box
                           sx={{
-                            flex: "1 1 145px",
+                            flex: {
+                              xs: "1 1 100%",
+                              sm: "1 1 145px",
+                            },
                             p: 1.4,
                             borderRadius: 2,
                             backgroundColor: "#f5f6f8",
@@ -733,7 +737,10 @@ export default function TemplatePage() {
 
                       <Box
                         sx={{
-                          flex: "1 1 145px",
+                          flex: {
+                            xs: "1 1 100%",
+                            sm: "1 1 145px",
+                          },
                           p: 1.4,
                           borderRadius: 2,
                           backgroundColor: "#f5f6f8",
@@ -860,10 +867,13 @@ export default function TemplatePage() {
                     onClick={handleBuy}
                     startIcon={<DownloadRoundedIcon />}
                     sx={{
-                      minHeight: 56,
+                      minHeight: 54,
                       borderRadius: 2.5,
                       textTransform: "none",
-                      fontSize: "0.98rem",
+                      fontSize: {
+                        xs: "0.9rem",
+                        sm: "0.98rem",
+                      },
                       fontWeight: 850,
                       boxShadow: "0 8px 25px rgba(15,23,42,0.14)",
 
@@ -928,22 +938,6 @@ export default function TemplatePage() {
           </Box>
         </Box>
       </Box>
-
-      {/* ==========================================
-          MOBILE BUY BAR
-      ========================================== */}
-
-      {/* Mobile safe area */}
-
-      <Box
-        sx={{
-          display: {
-            xs: "block",
-            md: "none",
-          },
-          height: 90,
-        }}
-      />
     </Box>
   );
 }
