@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Box,
@@ -12,7 +12,6 @@ import {
 
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
@@ -25,47 +24,56 @@ export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
 
   const productId = searchParams.get("product");
-
   const token = searchParams.get("token");
 
   const [downloadStarted, setDownloadStarted] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+
+  // Prevent React StrictMode from starting the download twice
+  const downloadTriggered = useRef(false);
 
   const downloadUrl =
     productId && token ? getDownloadUrl(productId, token) : null;
 
   // ==========================================
-  // DOWNLOAD
+  // AUTOMATIC DOWNLOAD
   // ==========================================
 
-  const handleDownload = () => {
-    if (!downloadUrl) {
-      alert("Invalid download link.");
+  useEffect(() => {
+    if (!downloadUrl || downloadTriggered.current) {
       return;
     }
 
-    try {
-      const link = document.createElement("a");
+    downloadTriggered.current = true;
 
-      link.href = downloadUrl;
+    const startDownload = () => {
+      try {
+        const link = document.createElement("a");
 
-      link.setAttribute("download", "");
+        link.href = downloadUrl;
 
-      link.style.display = "none";
+        // Do NOT use fetch/blob here.
+        // The browser handles the large ZIP download natively.
+        link.style.display = "none";
 
-      document.body.appendChild(link);
+        document.body.appendChild(link);
 
-      link.click();
+        link.click();
 
-      document.body.removeChild(link);
+        document.body.removeChild(link);
 
-      // Stay on this page
-      setDownloadStarted(true);
-    } catch (error) {
-      console.error("Download error:", error);
+        setDownloadStarted(true);
+      } catch (error) {
+        console.error("Automatic download error:", error);
+        setDownloadError(true);
+      }
+    };
 
-      alert("Unable to download the template.");
-    }
-  };
+    // Small delay allows the success page to render first
+    const timer = setTimeout(startDownload, 500);
+
+    return () => clearTimeout(timer);
+  }, [downloadUrl]);
 
   return (
     <Box
@@ -78,9 +86,9 @@ export default function PaymentSuccess() {
         backgroundColor: "#f6f7f9",
       }}
     >
-      {/* =====================================================
+      {/* ==========================================
           HEADER
-      ====================================================== */}
+      ========================================== */}
 
       <Box
         sx={{
@@ -105,23 +113,21 @@ export default function PaymentSuccess() {
             justifyContent: "space-between",
           }}
         >
-          <Button
+          <Typography
+            component="a"
             href="/"
-            startIcon={<ArrowBackRoundedIcon />}
             sx={{
               color: "#fff",
-              textTransform: "none",
-              fontWeight: 700,
-              minWidth: 0,
-              px: 1,
-
-              "&:hover": {
-                backgroundColor: "rgba(255,255,255,0.06)",
+              textDecoration: "none",
+              fontWeight: 800,
+              fontSize: {
+                xs: "0.95rem",
+                sm: "1rem",
               },
             }}
           >
-            Templates
-          </Button>
+            Riyank Edit
+          </Typography>
 
           <Stack direction="row" spacing={0.6} alignItems="center">
             <SecurityRoundedIcon
@@ -146,9 +152,9 @@ export default function PaymentSuccess() {
         </Box>
       </Box>
 
-      {/* =====================================================
+      {/* ==========================================
           MAIN CONTENT
-      ====================================================== */}
+      ========================================== */}
 
       <Box
         sx={{
@@ -211,9 +217,9 @@ export default function PaymentSuccess() {
             }}
           >
             <Stack spacing={2.5} alignItems="center">
-              {/* =================================================
+              {/* ==========================================
                   SUCCESS ICON
-              ================================================== */}
+              ========================================== */}
 
               <Box
                 sx={{
@@ -239,11 +245,9 @@ export default function PaymentSuccess() {
                       opacity: 0,
                       transform: "scale(0.55)",
                     },
-
                     "70%": {
                       transform: "scale(1.08)",
                     },
-
                     "100%": {
                       opacity: 1,
                       transform: "scale(1)",
@@ -262,9 +266,9 @@ export default function PaymentSuccess() {
                 />
               </Box>
 
-              {/* =================================================
+              {/* ==========================================
                   BADGE
-              ================================================== */}
+              ========================================== */}
 
               <Stack
                 direction="row"
@@ -296,9 +300,9 @@ export default function PaymentSuccess() {
                 </Typography>
               </Stack>
 
-              {/* =================================================
+              {/* ==========================================
                   TITLE
-              ================================================== */}
+              ========================================== */}
 
               <Typography
                 component="h1"
@@ -317,9 +321,9 @@ export default function PaymentSuccess() {
                 Payment successful
               </Typography>
 
-              {/* =================================================
+              {/* ==========================================
                   DESCRIPTION
-              ================================================== */}
+              ========================================== */}
 
               <Typography
                 sx={{
@@ -333,7 +337,8 @@ export default function PaymentSuccess() {
                   lineHeight: 1.7,
                 }}
               >
-                Thank you for your purchase. Your template is ready to download.
+                Thank you for your purchase. Your template download has started
+                automatically.
               </Typography>
 
               <Divider
@@ -343,225 +348,188 @@ export default function PaymentSuccess() {
                 }}
               />
 
-              {/* =================================================
-                  DOWNLOAD AREA
-              ================================================== */}
+              {/* ==========================================
+                  DOWNLOAD STATUS
+              ========================================== */}
 
-              {!downloadStarted ?
-                <>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      p: {
-                        xs: 2,
-                        sm: 2.5,
-                      },
-                      borderRadius: 2.5,
-                      backgroundColor: "#f7f7f8",
-                      border: "1px solid #e8e9ed",
-                      textAlign: "left",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "0.7rem",
-                        fontWeight: 750,
-                        letterSpacing: "0.06em",
-                        color: "#9297a1",
-                        mb: 0.8,
-                      }}
-                    >
-                      YOUR DOWNLOAD
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        fontWeight: 800,
-                        color: "#202229",
-                      }}
-                    >
-                      Your template is ready.
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        mt: 0.5,
-                        color: "#858a94",
-                        fontSize: "0.8rem",
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      Click the button below to download your purchased
-                      template.
-                    </Typography>
-                  </Box>
-
-                  {downloadUrl ?
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      size="large"
-                      onClick={handleDownload}
-                      startIcon={<DownloadRoundedIcon />}
-                      sx={{
-                        minHeight: 57,
-                        borderRadius: 2.5,
-                        textTransform: "none",
-                        fontWeight: 850,
-                        fontSize: "0.98rem",
-                        boxShadow: "0 8px 25px rgba(15,23,42,0.14)",
-
-                        "&:hover": {
-                          transform: "translateY(-2px)",
-                          boxShadow: "0 12px 32px rgba(15,23,42,0.2)",
-                        },
-
-                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      }}
-                    >
-                      Download Template
-                    </Button>
-                  : <Box
-                      sx={{
-                        width: "100%",
-                        p: 2,
-                        borderRadius: 2.5,
-                        textAlign: "center",
-                        backgroundColor: "#fff2f2",
-                        border: "1px solid #f0d2d2",
-                      }}
-                    >
-                      <Typography color="error" fontWeight={700}>
-                        Invalid download link.
-                      </Typography>
-                    </Box>
-                  }
-                </>
-              : <>
-                  {/* ==========================================
-                      AFTER DOWNLOAD
-                  ========================================== */}
-
-                  <Box
-                    sx={{
-                      width: "100%",
-                      textAlign: "center",
-                      py: 1,
-                    }}
-                  >
-                    <DownloadRoundedIcon
-                      sx={{
-                        fontSize: 42,
-                        color: "#111318",
-                        mb: 1,
-                      }}
-                    />
-
-                    <Typography
-                      sx={{
-                        fontSize: "1.15rem",
-                        fontWeight: 800,
-                        color: "#111318",
-                      }}
-                    >
-                      Download started
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        mt: 0.8,
-                        fontSize: "0.85rem",
-                        lineHeight: 1.6,
-                        color: "#777d88",
-                      }}
-                    >
-                      Your template download should begin shortly.
-                    </Typography>
-                  </Box>
-
-                  {/* ONLY HOME ACTION */}
-
-                  <Button
-                    href="/"
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    sx={{
-                      minHeight: 56,
-                      borderRadius: 2.5,
-                      textTransform: "none",
-                      fontWeight: 850,
-                      fontSize: "0.98rem",
-                      boxShadow: "0 8px 25px rgba(15,23,42,0.14)",
-
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 12px 32px rgba(15,23,42,0.2)",
-                      },
-
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                  >
-                    Explore Templates
-                  </Button>
-                </>
-              }
-
-              {/* =================================================
-                  TRUST INFORMATION
-              ================================================== */}
-
-              {!downloadStarted && (
-                <Stack
-                  direction={{
-                    xs: "column",
-                    sm: "row",
+              {downloadStarted && !downloadError && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    p: {
+                      xs: 2,
+                      sm: 2.5,
+                    },
+                    borderRadius: 2.5,
+                    backgroundColor: "#f7f7f8",
+                    border: "1px solid #e8e9ed",
+                    textAlign: "center",
                   }}
-                  spacing={{
-                    xs: 1,
-                    sm: 3,
-                  }}
-                  alignItems="center"
-                  justifyContent="center"
                 >
-                  <Stack direction="row" spacing={0.6} alignItems="center">
-                    <SecurityRoundedIcon
-                      sx={{
-                        fontSize: 15,
-                        color: "#858b95",
-                      }}
-                    />
+                  <DownloadRoundedIcon
+                    sx={{
+                      fontSize: 42,
+                      color: "#111318",
+                      mb: 1,
+                    }}
+                  />
 
-                    <Typography
-                      sx={{
-                        fontSize: "0.72rem",
-                        color: "#858b95",
-                      }}
-                    >
-                      Secure payment
-                    </Typography>
-                  </Stack>
+                  <Typography
+                    sx={{
+                      fontSize: "1.1rem",
+                      fontWeight: 800,
+                      color: "#111318",
+                    }}
+                  >
+                    Download started
+                  </Typography>
 
-                  <Stack direction="row" spacing={0.6} alignItems="center">
-                    <BoltRoundedIcon
-                      sx={{
-                        fontSize: 15,
-                        color: "#858b95",
-                      }}
-                    />
-
-                    <Typography
-                      sx={{
-                        fontSize: "0.72rem",
-                        color: "#858b95",
-                      }}
-                    >
-                      Instant download
-                    </Typography>
-                  </Stack>
-                </Stack>
+                  <Typography
+                    sx={{
+                      mt: 0.8,
+                      fontSize: "0.84rem",
+                      lineHeight: 1.6,
+                      color: "#777d88",
+                    }}
+                  >
+                    Your template is being downloaded. Please check your
+                    browser's downloads.
+                  </Typography>
+                </Box>
               )}
+
+              {/* ==========================================
+                  INVALID LINK
+              ========================================== */}
+
+              {!downloadUrl && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    p: 2,
+                    borderRadius: 2.5,
+                    textAlign: "center",
+                    backgroundColor: "#fff2f2",
+                    border: "1px solid #f0d2d2",
+                  }}
+                >
+                  <Typography color="error" fontWeight={700}>
+                    Invalid download link.
+                  </Typography>
+                </Box>
+              )}
+
+              {/* ==========================================
+                  DOWNLOAD ERROR
+              ========================================== */}
+
+              {downloadError && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    p: 2,
+                    borderRadius: 2.5,
+                    textAlign: "center",
+                    backgroundColor: "#fff2f2",
+                    border: "1px solid #f0d2d2",
+                  }}
+                >
+                  <Typography color="error" fontWeight={700}>
+                    We couldn't start the download.
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      mt: 0.6,
+                      fontSize: "0.82rem",
+                      color: "#777d88",
+                    }}
+                  >
+                    Please contact us for help.
+                  </Typography>
+                </Box>
+              )}
+
+              {/* ==========================================
+                  EXPLORE TEMPLATES
+              ========================================== */}
+
+              <Button
+                href="/"
+                variant="contained"
+                fullWidth
+                size="large"
+                sx={{
+                  minHeight: 56,
+                  borderRadius: 2.5,
+                  textTransform: "none",
+                  fontWeight: 850,
+                  fontSize: "0.98rem",
+                  boxShadow: "0 8px 25px rgba(15,23,42,0.14)",
+
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 12px 32px rgba(15,23,42,0.2)",
+                  },
+
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                }}
+              >
+                Explore Templates
+              </Button>
+
+              {/* ==========================================
+                  TRUST INFORMATION
+              ========================================== */}
+
+              <Stack
+                direction={{
+                  xs: "column",
+                  sm: "row",
+                }}
+                spacing={{
+                  xs: 1,
+                  sm: 3,
+                }}
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Stack direction="row" spacing={0.6} alignItems="center">
+                  <SecurityRoundedIcon
+                    sx={{
+                      fontSize: 15,
+                      color: "#858b95",
+                    }}
+                  />
+
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      color: "#858b95",
+                    }}
+                  >
+                    Secure payment
+                  </Typography>
+                </Stack>
+
+                <Stack direction="row" spacing={0.6} alignItems="center">
+                  <BoltRoundedIcon
+                    sx={{
+                      fontSize: 15,
+                      color: "#858b95",
+                    }}
+                  />
+
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      color: "#858b95",
+                    }}
+                  >
+                    Instant download
+                  </Typography>
+                </Stack>
+              </Stack>
             </Stack>
           </CardContent>
         </Card>
